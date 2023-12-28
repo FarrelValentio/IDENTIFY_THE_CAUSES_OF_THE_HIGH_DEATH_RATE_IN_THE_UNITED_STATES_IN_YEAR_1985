@@ -1,0 +1,14 @@
+Variabel,Interpretasi
+land,Luas wilayah di setiap negara bagian di Amerika Serikat
+pop,Populasi di setiap negara bagian di Amerika Serikat
+acc,Banyaknya orang yang meninggal karena kecelakaan
+card,Banyaknya orang yang meninggal karena penyakit kardiovaskular
+canc,Banyaknya orang yang meninggal karena penyakit kanker
+pul,Banyaknya orang yang meninggal karena penyakit pulmonar
+pneu,Banyaknya orang yang meninggal karena penyakit pneumonia
+diab,Banyaknya orang yang meninggal karena penyakit diabetes
+liv,Banyaknya orang yang meninggal karena penyakit liver
+r,1 : Negara bagian Amerika Serikat di daerah Northeast
+,2 : Negara bagian Amerika Serikat di daerah Midwest
+,3 : Negara bagian Amerika Serikat di daerah South
+,4 : Negara bagian Amerika Serikat di daerah West

@@ -1,0 +1,1426 @@
+---
+title: PENERAPAN ANALISIS KOMPONEN UTAMA DAN ANALISIS FAKTOR PADA DATA US HEALTH UNTUK MENGIDENTIFIKASI
+  PENYEBAB TINGGINYA ANGKA KEMATIAN DI AMERIKA SERIKAT PADA TAHUN 1985
+author: "KELOMPOK I"
+date: "3/13/2023"
+output:
+  html_document:
+    number_sections: true
+---
+# Latar Belakang
+
+<div align="justify"> Salah satu faktor penting dalam pembangunan nasional adalah kondisi kesehatan masyarakat sehingga diperlukan interpretasi yang akurat dari data kesehatan yang ada sehingga dapat digunakan sebagai evaluasi terkait kebijakan ataupun sekedar memonitor kesehatan masyarakat. Pada pembahasan di laporan ini, akan digunakan US Health. Data ini berisi banyaknya orang yang meninggal akibat kecelakaan dan penyakit tertentu dari 50 negara bagian di Amerika Serikat pada tahun 1985. Permasalahan yang ada pada data ini adalah terlalu banyak indikator/variabel yang mempengaruhi kesehatan di setiap negara bagian di Amerika Serikat. Indikator yang banyak ini akan mengakibatkan timbulnya kesulitan dalam menginterpretasikan kondisi kesehatan di Amerika Serikat. 
+
+Dari latar belakang di atas, pembahasan pada laporan ini bertujuan untuk mereduksi beberapa indikator kesehatan menjadi beberapa variabel baru yang jumlahnya lebih sedikit, namun tidak menghilangkan karakteristik dari indikator tersebut. Metode yang akan digunakan dalam mereduksi indikator kesehatan pada data kesehatan di Amerika Serikat adalah Analisis Komponen Utama (PCA). Selain itu, penelitian ini bertujuan untuk mengidentifikasi indikator utama atau indikator yang berperan besar dalam menjelaskan karakteristik penyebab kematian di 50 negara bagian di Amerika Serikat pada tahun 1985. 
+
+# Ruang Lingkup 
+<div align="justify"> Data yang digunakan berupa data sekunder, yaitu data US Health yang terdiri dari 50 negara bagian yang ditinjau penyebab kematian masyarakatnya dari 10 indikator/ variabel. Adapun variabel yang digunakan pada pembahasan laporan ini adalah sebagai berikut.
+
+```{r variabel desc, echo= FALSE}
+variabel_desc <-read.csv('vb (1).csv',header=TRUE)
+knitr::kable(variabel_desc)
+```
+
+# Metode Komponen Utama
+<div align="justify"> Berikut ini merupakan prosedur yang digunakan dalam analisis komponen utama pada data US Health.
+
+## Load library dan Dataset
+
+<div align="justify"> Berikut ini merupakan kode program untuk load library dan dataset pada R.
+
+```{r load library}
+library(factoextra)
+us_health<- read.csv('us_healthfix (1).csv',header=TRUE)
+```
+
+## Pilih Data yang akan digunakan
+
+<div align="justify"> Dataset 'us_health' terdiri dari 50 observasi dengan 13 variabel. Data 'us_health' akan disederhanakan sehingga dataset hanya memuat 11 variabel yang akan digunakan pada analisis komponen utama pada laporan ini. 
+
+```{r}
+us_healthused <- us_health[,1:11]
+```
+## Standarisasi Data
+
+<div align="justify"> Pada data US Health, satuan dari data variabel "land" berbeda dengan data variabel lainnya, sehingga perlu dilakukan standarisasi untuk memberikan nilai yang satuannya sama. Selain itu, walaupun satuan untuk data variabel "popu" dan variabel lainnya sama, perbedaan nilainya cukup besar, sehingga untuk menghindari adanya kesalahan dalam analisis akibat *range* data yang cukup besar, dilakukan standarisasi secara keseluruhan untuk data yang akan digunakan dalam analisis komponen utama. Berikut ini merupakan kode program yang digunakan dalam standarisasi data di R.
+
+```{r}
+UShealth_standarized <- scale(x = us_healthused)
+```
+## Perhitungan Matriks Variansi dan Kovariansi
+
+<div align="justify"> Selanjutnya, akan dicari matriks varian dan kovarian dari data yang telah distandarisasi. Matriks ini akan digunakan untuk menentukan nilai eigen dan vektor eigen, di mana nilai eigen dan vektor eigen ini akan digunakan dalam menentukan komponen utama. Berikut ini merupakan kode program untuk menghitung variansi dan kovariansi dari setiap variabel yang digunakan.
+
+```{r}
+UShealth_covariance <- cov(us_healthused)
+UShealth_covariance
+```
+## Penentuan Nilai Eigen dan Vektor Eigen
+
+Berikut ini merupakan kode program di R yang dapat digunakan untuk mencari nilai eigen dan vektor eigen dari matriks variansi dan kovariansi.
+
+```{r}
+UShealth_eigen <- eigen(UShealth_covariance)
+UShealth_eigen
+```
+<div align="justify"> Vektor eigen yang diperoleh akan digunakan sebagai koefisien dari variabel yang digunakan untuk membentuk komponen utama atau sebagai *loading*. Sedangkan nilai eigen untuk menggambarkan besarnya variasi data yang dapat ditangkap oleh komponen utama. Komponen utama yang akan digunakan adalah vektor eigen yang berkaitan dengan nilai eigen terbesar.
+
+## Penentuan Jumlah Komponen Utama
+
+<div align="justify"> Salah satu metode yang digunakan untuk menentukan banyaknya komponen utama adalah dengan melihat proporsi kumulatif dari variansi yang dapat dijelaskan oleh komponen utama. Proporsi variansi komponen utama didapatkan dari nilai eigen pada komponen utama yang bersesuaian dibagi dengan total semua nilai eigen. Berikut ini merupakan kode program di R yang dapat digunakan dalam menentukan komponen utama.
+
+```{r}
+pca_us_health <- prcomp(x=us_healthused,center = T, scale= T)
+summary(pca_us_health)
+```
+
+Berdasarkan *output* yang dihasilkan di atas, banyaknya komponen utama yang dapat diambil sebanyak 4 komponen utama. Hal ini karena 4 komponen utama telah menangkap sekitar 85% dari total keberagaman data. Selain meninjau dari proporsi kumulatif, dapat digunakan metode lain, yaitu menggunakan *Scree Plot*. *Scree Plot* merupakan plot antara komponen utama dengan variansi dari nilai eigennya. Banyaknya komponen utama yang diambil adalah pada titik ekstrem di mana garis kurva mulai melandai, yang menandakan bahwa penambahan komponen utama tidak signifikan dalam menambah total keragaman data yang dapat diambil. Berikut merupakan *Scree Plot* dari data US Health.
+
+```{r}
+scree_data = data.frame(eigen_value = eigen(UShealth_covariance)$values, 
+PC = 1:11)
+plot(x = scree_data$PC, y = scree_data$eigen_value, type = 
+'b', xlab = 'Komponen Utama ke-', ylab = 'Nilai eigen', main = 'Scree Plot')
+```
+
+Berdasarkan *Scree Plot* di atas, banyaknya komponen utama yang dipilih adalah 4. Hal ini karena titik ekstrem di mana garis kurva mulai melandai ditunjukkan pada komponen ke 4. Berdasarkan informasi ini jumlah komponen yang dipilih berdasarkan metode proporsi kumulatif variansi dan metode *Scree Plot* adalah 4 komponen utama.
+
+## Perhitungan Koefisien Komponen Utama
+<div align="justify"> Persamaan komponen utama dibentuk berdasarkan nilai vektor eigen dari data matriks variansi dan kovariansi antar tiap indikator.
+```{r}
+pca_us_health <- prcomp(x=UShealth_standarized,  center = TRUE)
+pca_us_health
+```
+## Interpretasi dari setiap  Komponen Utama
+<div align="justify"> Nilai koefisien setiap indikator dari setiap komponen utama yang terbentuk digunakan sebagai alat bantu dalam menginterpretasikan setiap komponen utama. Selain itu, nilai ini juga dapat digunakan untuk memberi nama pada komponen utama. Pemberian nama ini bertujuan untuk membuat indikator baru yang lebih sedikit dibandingkan dengan indikator awal, namun tetap mempertahankan karakteristik setiap variabel pada data secara keseluruhan.
+
++ **Komponen Utama 1**
+
+KU_1= 0.00783964**land** + 0.36277590**popu** -0.33144984**acc** +  0.38278715**card**+ 0.40872291**canc** + 0.16039734**pul** + 0.17655294**pneu** + 0.26320634**diab** + 0.26828300**liv** + 0.37153280**doc** + 0.32970375**hosp**
+
+KU_1 menggambarkan ukuran dari banyaknya yang meninggal akibat kanker, kardiovaskular, dan banyaknya dokter pada setiap negara bagian. Ketiga indikator ini merupakan indikator terkuat dalam KU_1. Hal ini ditunjukkan dengan koefisien dari ketiga indikator tersebut merupakan koefisien dengan nilai terbesar.
+
+Berdasarkan informasi tersebut, KU_1 dapat diinterpretasikan sebagai kondisi di mana kurangnya jumlah dokter spesialis kanker dan kardiovaskular di setiap negara bagian sehingga banyak masyarakat yang meninggal akibat penyakit tersebut. Hal ini dapat dilihat dari jumlah dokter dan jumlah rumah sakit yang cukup banyak, namun kematian akibat penyakit kanker dan kardiovaskular sangat tinggi. Hal ini menunjukkan bahwa dibutuhkan lebih banyak dokter spesialis untuk setiap penyakit supaya penanganan penyakit yang diderita oleh masyarakat bisa maksimal. Dengan demikian, KU_1 dapat dinamakan sebagai "Kurangnya jumlah dokter spesialis kanker dan kardiovaskular pada setiap negara bagian".
+
++ **Komponen Utama 2**
+
+KU_2 = 0.3728850**land** + 0.3936450**popu** + 0.1535496**acc** - 0.2974328**card** - 0.2964253**canc** - 0.2443620**pul** - 0.1646615**pneu** - 0.3377191**diab** +  0.1141351**liv** + 0.3602321**doc** + 0.4030066**hosp**
+
+KU_2 menggambarkan kondisi kesehatan masyarakat yang baik. Hal ini ditunjukkan dengan banyaknya populasi, dokter, dan jumlah rumah sakit, namun angka kematian akibat penyakit sangat rendah. Hal ini menunjukkan bahwa jumlah rumah dan dokter di Amerika Serikat sudah cukup untuk mengatasi permasalahan kesehatan yang ada di setiap negara bagian. Dengan demikian, KU_2 dapat dinamakan sebagai "Ketersediaan fasilitas dan tenaga kesehatan di setiap negara bagian yang sudah memadai".
+
++ **Komponen Utama 3**
+
+KU_3 = 0.48404851**land** - 0.07517375**popu** + 0.23741707**acc** + 0.15542036**card** - 0.02197231**canc** + 0.47574171**pul** + 0.58009579**pneu** - 0.26106788**diab**   - 0.17667888**liv** - 0.10134402**doc** + 0.08097556**hosp**
+
+KU_3 menggambarkan banyaknya orang yang meninggal akibat penyakit pneumonia, banyaknya orang yang meninggal akibat penyakit pulmonar, dan luas wilayah pada setiap negara bagian. Dari KU_3, dapat diperoleh informasi bahwa penyebab seseorang meninggal akibat pneumonia dan pulmonar adalah karena kurangnya dokter spesialis pneumonia dan pulmonar. Hal ini ditunjukkan oleh koefisien untuk variabel "doc" bernilai negatif. Selain itu, negara bagian memiliki wilayah yang cukup luas, namun jumlah rumah sakit dan tenaga kesehatan sedikit sehingga penanganan masyarakat menjadi kurang tanggap. Dengan demikian, KU_3 dapat dinamakan "Kurangnya dokter spesialis penyakit pneumonia dan pulmonar serta tidak ratanya penyebaran rumah sakit dan dokter di setiap negara bagian".
+
++ **Komponen Utama 4**
+
+KU_4 = -0.0001085172**land** - 0.0447199239**popu** + 0.3080959747**acc** - 0.1532251104*card** + 0.0460330136**canc** + 0.5045911827**pul** - 0.2716676712**pneu** - 0.0258944720**diab** + 0.7187647273**liv** - 0.0055674151**doc** - 0.1781577278**hosp**
+
+KU_4 menggambarkan banyaknya orang yang meninggal akibat penyakit liver, banyaknya orang yang meninggal akibat penyakit pulmonar, dan banyaknya orang yang meninggal akibat kecelakaan. Hal ini disebabkan karena kurangnya dokter spesialis liver, pulmonar, dan kanker. Hal ini dapat dilihat dari koefisien variabel doc yang bernilai negatif. Kurangnya dokter spesialis juga dapat disebabkan karena kurangnya rumah sakit yang tersedia. Hal ini dapat dilihat dari koefisien variabel hosp yang bernilai negatif. Rumah sakit yang tidak tersedia ini juga menyebabkan kurangnya penanganan terhadap korban kecelakaan. Dengan demikian, KU_4 dapat dinamakan "Kurangnya dokter spesialis liver dan ketersediaan rumah sakit di setiap negara bagian".
+
+## Visualisasi Komponen Utama
+
+<div align="justify"> Berikut ini merupakan visualisasi dari 4 komponen utama terhadap negara bagian yang di kelompokkan berdasarkan wilayah, yaitu Midwest, Northeast, South, dan West.
+
+```{r, echo= FALSE}
+library(plotly)
+library(stats)
+us_health<- read.csv(file.choose(), header= TRUE)
+X <- subset(us_health, select = -c(r,state))
+prin_comp <- prcomp(X, scale= T)
+explained_variance_ratio <- summary(prin_comp)[["importance"]]['Proportion of Variance',]
+explained_variance_ratio <- 100 * explained_variance_ratio
+components <- prin_comp[["x"]]
+components <- data.frame(components)
+components <- cbind(components, us_health$r)
+components$PC3 <- -components$PC3
+components$PC2 <- -components$PC2
+```
+```{r}
+axis = list(showline=FALSE,
+            zeroline=FALSE,
+            gridcolor='#ffff',
+            ticklen=4,
+            titlefont=list(size=13))
+
+fig <- components %>%
+  plot_ly()  %>%
+  add_trace(
+    type = 'splom',
+    dimensions = list(
+      list(label=paste('PC1 (',toString(round(explained_variance_ratio[1],1)),'%)',sep = ''), values=~PC1),
+      list(label=paste('PC2 (',toString(round(explained_variance_ratio[2],1)),'%)',sep = ''), values=~PC2),
+      list(label=paste('PC3 (',toString(round(explained_variance_ratio[3],1)),'%)',sep = ''), values=~PC3),
+      list(label=paste('PC4 (',toString(round(explained_variance_ratio[4],1)),'%)',sep = ''), values=~PC4)
+    ),
+    color = ~us_health$r, colors = c('#636EFA','#EF553B','#00CC96', '#F4A582')
+  ) %>%
+  style(diagonal = list(visible = FALSE)) %>%
+  layout(
+    legend=list(title=list(text='color')),
+    hovermode='closest',
+    dragmode= 'select',
+    plot_bgcolor='rgba(240,240,240,0.95)',
+    xaxis=list(domain=NULL, showline=F, zeroline=F, gridcolor='#ffff', ticklen=4),
+    yaxis=list(domain=NULL, showline=F, zeroline=F, gridcolor='#ffff', ticklen=4),
+    xaxis1=axis,
+    xaxis2=axis,
+    xaxis3=axis,
+    xaxis4=axis,
+    yaxis1=axis,
+    yaxis2=axis,
+    yaxis3=axis,
+    yaxis4=axis
+  )
+
+fig
+```
+
+# Kesimpulan
+<div align="justify"> Dengan metode analisis komponen utama, dapat diketahui bahwa data kesehatan US Health yang terdiri atas 10 indikator dapat direduksi menjadi 4 indikator namun tetap dapat menggambarkan keragaman dari data awal. Keempat indikator tersebut adalah kurangnya ketersediaan dokter spesialis kanker dan kardiovaskular, Ketersediaan fasilitas dan tenaga kesehatan di setiap negara bagian yang sudah memadai, kurangnya dokter spesialis penyakit pneumonia dan pulmonar serta tidak ratanya penyebaran rumah sakit di setiap negara bagian, dan Kurangnya dokter spesialis liver di rumah sakit.
+
+Dari keempat indikator tersebut, dapat disimpulkan bahwa fasilitas dan tenaga kesehatan di setiap negara bagian di Amerika Serikat sudah mampu mengakomodasi masyarakat yang ada, namun penyebarannya tidak rata. Selain itu, ketersediaan dokter spesialis penyakit kanker, kardiovaskular, pneumonia, dan liver masih sedikit sehingga angka kematian akibat penyakit tersebut cukup tinggi di Amerika Serikat. 
+
+Dengan demikian, diperlukan adanya pemerataan pembangunan rumah sakit di setiap negara bagian, mengingat bahwa luas wilayah dan jumlah populasi di setiap negara bagian yang berbeda-beda, sehingga kebutuhan dan akses rumah sakit setiap negara bagian juga berbeda-beda. Selain itu, diperlukan lebih banyak dokter spesialis penyakit di Amerika Serikat, sehingga penanganan penyakit yang diderita oleh masyarakat akan lebih efektif jika ditangani oleh orang yang ahli di bidang tersebut. 
+
+
+# Metode Analisis Faktor
+<div align="justify">
+Analisis faktor merupakan metode untuk mereduksi variabel dalam jumlah yang besar ke dalam beberapa jumlah kecil faktor.
+Di dalam analisis faktor, akan digunakan model faktor sebagai representasi dari matriks korelasi,
+$$
+\begin{align*}
+  \Sigma &= Q\hat{Q} + \Psi
+\end{align*}
+$$
+Berikut ini merupakan prosedur yang digunakan dalam analisis faktor pada data US Health.
+
+## Load dataset yang digunakan
+<div align="justify">Berikut dataset US HEALTH yang digunakan.
+```{r}
+us_health<- read.csv('us_healthfix.csv',header=TRUE)
+us_health
+```
+
+## Pilih data yang akan digunakan
+<div align="justify">Dataset 'us_health' terdiri dari 50 observasi dengan 13 variabel. Data 'us_health' akan disederhanakan sehingga dataset hanya memuat 10 variabel yang akan digunakan pada analisis faktor pada laporan ini. 
+```{r}
+us_healthused<- us_health[,3:12]
+us_healthused
+```
+
+## Perhitungan Loadings dan *Uniquenesses*
+<div align="justify">Tujuan utama dari faktor analisis adalah untuk mencari *loadings* Q dan spesifik variansi (*Uniquenesses*) serta mendeskripsikan 10 variabel di dalam data yang direduksi dalam faktor laten k (*factors*) dengan k < 10. Di sini akan digunakan *command* 'factanal' untuk mendeskripsikan loadings Q, spesifik variansi (*Uniquenesses*), dan nilai korelasi antar komponen. Data yang digunakan dalam command ini juga sudah terstandarilasasikan 
+```{r}
+us_healthused.fa<- factanal(us_healthused,factors = 4)
+us_healthused.fa
+```
+
+Faktor *loadings* ($Q$) adalah bobot dan korelasi antara masing-masing variabel dengan faktor tersebut. Semakin tinggi load nya, maka semakin relevan dalam menentukan dimensi faktor. Nilai *loadings* yang bernilai negatif menunjukkan dampak yang kurang relevan antar dimensi faktor. Hasil loadings berada pada interval -1 sampai 1. Beberapa variabel hanya memiliki nilai load yang tinggi pada faktor yang tinggi.
+Hasil yang diperoleh dari command tersebut berupa matriks komponen. Untuk penelitian ini, akan digunakan *factors* = 4 untuk mereduksi 10 variabel ke dalam 4 faktor. Berdasarkan komponen loadings pada deskripsi di atas, variabel "hosp" memiliki nilai *loadings* tertinggi untuk faktor 1, variabel "canc" memiliki nilai *loadings* tertinggi untuk faktor 2, variabel "pneu" memiliki nilai *loadings* tertinggi untuk faktor 3, dan variabel "liv" memiliki nilai *loadings* tertinggi untuk faktor 4.
+
+Dilihat dari hasil perhitungan diperoleh **p-value** < 0.05, yang artinya hasil sample kurang konsisten dengan hipotesis awal benar atau $H_0$ ditolak, karena jumlah faktor yang terlalu kecil.
+
+### Penentuan nilai *communality*
+<div align="justify">Berikut ini merupakan nilai *communality* yang didapat dari perhitungan yang telah dilakukan
+```{r}
+apply(us_healthused.fa$loadings^2,1,sum)
+```
+
+*Communality* merupakan proporsi variabel dari variabilitas yang menjelaskan faktor - faktor tersebut. Nilai *communality* yang semakin mendekati 1, semakin berhubungan antara variabel yang dijelaskan dengan faktor tersebut. 
+
+### Penentuan nilai *Uniquenesses*
+<div align="justify">Berikut ini merupakan nilai *Uniquenesses* yang didapat dari perhitungan yang telah dilakukan
+```{r}
+1 - apply(us_healthused.fa$loadings^2,1,sum) 
+```
+
+Untuk mencari nilai spesifik variansi (*Uniquenesses*), dapat dapat digunakan rumus, 1 - *communality* (variabel yang tidak spesifik). Perlu dilihat bahwa, semakin besar *Uniquenesses* akan menurunkan relevansi variabel dalam model faktor.
+
+## *Perhitungan Principal Component Method*
+
+```{r}
+Q = us_healthused.fa$loadings
+Psi = diag(us_healthused.fa$uniquenesses)
+Sigma <- Q %*% t(Q) + Psi
+Sigma
+```
+
+Perhatikan bahwa Q merupakan variabel yang merepresentasikan faktor *loadings*. Psi merupakan variabel yang merepresentasikan matriks diagonal dari *Uniquenesses*. Sigma merupakan variabel yang merepresentasikan kombinasi linear dari dari faktor - faktor yang tersedia dan kombinasi linear yang tidak dapat dijelaskan oleh faktor - faktor yang ada.
+
+### Meninjau Besarnya Tingkat Korelasi Antar Komponen (Kovariansi Empiris)
+<div align="justify">Berikut ini merupakan kode program untuk meninjau besar kovariansi empiris pada R.
+```{r}
+S <- us_healthused.fa$correlation
+S
+```
+
+### Membuat Matriks Residual
+<div align="justify"> Berikut ini merupakan kode program untuk menghasilkan matriks residual di R.
+```{r}
+round(S - Sigma,6)
+```
+
+*Output* yang dihasilkan berupa pembulatan menjadi 6 digit, sehingga diperoleh sebuah matriks residual yang merepresentasikan apakah model faktor yang dibuat sudah "cocok" dengan data yang ada. Setiap entri yang semakin dekat dengan angka 0 mengindikasikan bahwa model faktor yang telah diperoleh merupakan representasi yang baik.
+
+## Perhitungan *Loadings* dan *Uniquenesses* Dengan *factors* 4 dan Tidak Rotasi
+<div align="justify"> Berikut ini merupakan kode program untuk menghitung *Loadings* dan *Uniquenesses* dengan Factors 4 dan Tidak Ada Rotasi.
+```{r}
+us_healthused.fa.none<- factanal(us_healthused,factors = 4,
+                                 rotation = "none")
+us_healthused.fa.none
+```
+
+Berdasarkan deskripsi di atas, digunakan *factors* = 4 untuk mereduksi 10 variabel ke dalam 4 faktor dan tidak menggunakan rotasi faktor. Berdasarkan komponen *loadings* pada deskripsi di atas, variabel "popu" memiliki nilai *loadings* tertinggi untuk faktor 1, variabel "pneu" memiliki nilai *loadings* tertinggi untuk faktor 2, variabel "canc" memiliki nilai *loadings* tertinggi untuk faktor 3, dan variabel "liv" memiliki nilai *loadings* tertinggi untuk faktor 4.
+
+Dilihat dari hasil perhitungan diperoleh **p-value** < 0.05, yang artinya hasil sample kurang konsisten dengan hipotesis awal benar atau $H_0$ ditolak, karena jumlah faktor yang cukup kecil.
+
+## Perhitungan *Loadings* dan *Uniquenesses* Dengan *factors* 4 dan Rotasi Menggunakan Metode Varimax
+```{r}
+us_healthused.fa.varimax<- factanal(us_healthused,factors = 4,
+                                 rotation = "varimax")
+us_healthused.fa.varimax
+```
+
+Berdasarkan deskripsi di atas, digunakan *factors* = 4 untuk mereduksi 10 variabel ke dalam 4 faktor dan menggunakan rotasi faktor dengan metode varimax. Metode varimax untuk rotasi faktor artinya menggunakan metode rotasi ortogonalisasi untuk meminimumkan variabel dengan nilai *loadings* tertinggi masing - masing faktor. Berdasarkan komponen *loadings* pada deskripsi di atas, variabel "hosp" memiliki nilai *loadings* tertinggi untuk faktor 1, variabel "canc" memiliki nilai *loadings* tertinggi untuk faktor 2, variabel "pneu" memiliki nilai *loadings* tertinggi untuk faktor 3, dan variabel "liv" memiliki nilai *loadings* tertinggi untuk faktor 4.
+
+Dilihat dari hasil perhitungan diperoleh **p-value** < 0.05, yang artinya hasil sample kurang konsisten dengan hipotesis awal benar atau $H_0$ ditolak, karena jumlah faktor yang cukup kecil.
+
+## *Score Plot* dan Interpretasi Analisis Faktor Dengan 4 *factors* Antara Metode Tidak Rotasi dan Metode Varimax
+Akan dilihat perbandingan keempat faktor antara menggunakan metode tidak rotasi dan metode varimax
+
++ *Score Plot* Faktor 1 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.none$loadings[,1],
+     us_healthused.fa.none$loadings[,2],
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,1]-0.08,
+     us_healthused.fa.none$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,1],
+     us_healthused.fa.none$loadings[,3],
+     xlab = "Factor 1",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,1]-0.08,
+     us_healthused.fa.none$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,1],
+     us_healthused.fa.none$loadings[,4],
+     xlab = "Factor 1",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,1]-0.08,
+     us_healthused.fa.none$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 1, variabel "acc" memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 1 dan variabel tersebut lemah. Sedangkan variabel "popu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 1 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 1, di antaranya adalah variabel "popu", "doc", dan "hosp". 
+
+variabel "popu" yang dinyatakan sebagai besarnya populasi di Amerika Serikat, variabel "doc" yang dinyatakan sebagai banyaknya dokter di Amerika Serikat, dan variabel "hosp" yang dinyatakan sebagai banyaknya rumah sakit di Amerika Serikat. Berdasarkan *Score Plot* di atas, dapat dikatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah populasi, dokter, maupun rumah sakit. Faktor 1 sendiri menggambarkan banyaknya fasilitas rumah sakit dan tenaga kerja dokter mempengaruhi tingkat kesehatan populasi masyarakan. Oleh karena itu, faktor 1 dapat diinterpretasikan sebagai "Banyaknya jumlah rumah sakit dan tenaga kerja dokter mempengaruhi tingkat kesehatan populasi masyarakat di Amerika Serikat".    
+
++ *Score Plot* Faktor 2 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.none$loadings[,2],
+     us_healthused.fa.none$loadings[,1],
+     xlab = "Factor 2",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(2,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,2]-0.08,
+     us_healthused.fa.none$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,2],
+     us_healthused.fa.none$loadings[,3],
+     xlab = "Factor 2",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(2,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,2]-0.08,
+     us_healthused.fa.none$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,2],
+     us_healthused.fa.none$loadings[,4],
+     xlab = "Factor 2",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(2,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,2]-0.08,
+     us_healthused.fa.none$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 2, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 2 dan variabel tersebut lemah. Sedangkan variabel "pneu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 2 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 2, di antaranya adalah variabel "pneu", "card", dan "canc". 
+
+Dapat dikatakan, faktor 2 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 2 dapat diinterpretasikan sebagai "Besarnya kematian akibat pneunomia, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 3 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.none$loadings[,3],
+     us_healthused.fa.none$loadings[,1],
+     xlab = "Factor 3",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(3,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,3]-0.08,
+     us_healthused.fa.none$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,3],
+     us_healthused.fa.none$loadings[,2],
+     xlab = "Factor 3",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(3,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,3]-0.08,
+     us_healthused.fa.none$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+
+plot(us_healthused.fa.none$loadings[,3],
+     us_healthused.fa.none$loadings[,4],
+     xlab = "Factor 3",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(3,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,3]-0.08,
+     us_healthused.fa.none$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 3, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 3 dan variabel tersebut lemah. Sedangkan variabel "canc" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 3 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 3, di antaranya adalah variabel "diab", "card", dan "canc". 
+
+Dapat dikatakan, faktor 3 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 3 dapat diinterpretasikan sebagai "Besarnya kematian akibat diabetes, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 4 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.none$loadings[,4],
+     us_healthused.fa.none$loadings[,1],
+     xlab = "Factor 4",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(4,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,4]-0.08,
+     us_healthused.fa.none$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,4],
+     us_healthused.fa.none$loadings[,2],
+     xlab = "Factor 4",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(4,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,4]-0.08,
+     us_healthused.fa.none$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none$loadings[,4],
+     us_healthused.fa.none$loadings[,3],
+     xlab = "Factor 4",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation(4,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none$loadings[,4]-0.08,
+     us_healthused.fa.none$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 4, variabel "hosp" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 4 dan variabel tersebut lemah. Sedangkan variabel "liv" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 4 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 4, di antaranya adalah variabel "liv", "doc", dan "popu". 
+
+Dapat dikatakan, faktor 4 menyatakan  banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat liver tidak berkaitan dengan kualitas maupun kuantitas tenaga kerja dokter dan jumlah populasi. Hal ini dapat diasumsikan bahwa mayoritas orang yang meninggal akibat liver, mungkin disebabkan karena kurangnya jumlah dokter dalam menangani penyakit liver. Jumlah dokter spesialis liver juga dipengaruhi karena populasi yang kurang. Oleh karena itu, faktor 4 dapat diinterpretasikan sebagai "Kurangnya populasi masyarakat mempengaruhi kuantitas dokter yang berdampak pada banyaknya orang yang meninggal akibat liver".
+
++ *Score Plot* Faktor 1 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.varimax$loadings[,1],
+     us_healthused.fa.varimax$loadings[,2],
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,1]-0.08,
+     us_healthused.fa.varimax$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,1],
+     us_healthused.fa.varimax$loadings[,3],
+     xlab = "Factor 1",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,1]-0.08,
+     us_healthused.fa.varimax$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,1],
+     us_healthused.fa.varimax$loadings[,4],
+     xlab = "Factor 1",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,1]-0.08,
+     us_healthused.fa.varimax$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *score plot* analisis faktor dengan metode rotasi varimax, untuk faktor 1, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 1 dan variabel tersebut lemah. Sedangkan variabel "hosp" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 1 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 1, di antaranya adalah variabel "hosp", "popu", dan "doc". 
+
+Dapat dikatakan, faktor 1 menyatakan banyaknya fasilitas rumah sakit yang tersedia mempengaruhi kualitas kinerja dokter dan tingkat kesehatan populasi di Amerika Serikat. Dapat diasumsikan juga bahwa orang yang meninggal akibat kecelakaan tidak berkaitan dengan kualitas dokter maupun rumah sakit yang ada, melainkan mungkin karena kecelakaan yang terjadi di tempat kejadian menyebabkan kematian secara langsung. Oleh karena itu, faktor 1 dapat diinterpretasikan sebagai "Besarnya jumlah rumah sakit di Amerika Serikat mempengaruhi kesehatan dokter dan populasi masyarakat". 
+
++ *Score Plot* Faktor 2 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.varimax$loadings[,2],
+     us_healthused.fa.varimax$loadings[,1],
+     xlab = "Factor 2",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,2]-0.08,
+     us_healthused.fa.varimax$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,2],
+     us_healthused.fa.varimax$loadings[,3],
+     xlab = "Factor 2",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,2]-0.08,
+     us_healthused.fa.varimax$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,2],
+     us_healthused.fa.varimax$loadings[,4],
+     xlab = "Factor 2",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,2]-0.08,
+     us_healthused.fa.varimax$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *score plot* analisis metode rotasi varimax, untuk faktor 2, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 2 dan variabel tersebut lemah. Sedangkan variabel "canc" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 2 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 2, di antaranya adalah variabel "pneu", "card", dan "canc". 
+
+Dapat dikatakan, faktor 2 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 2 dapat diinterpretasikan sebagai "Besarnya kematian akibat pneunomia, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 3 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.varimax$loadings[,3],
+     us_healthused.fa.varimax$loadings[,1],
+     xlab = "Factor 3",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,3]-0.08,
+     us_healthused.fa.varimax$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,3],
+     us_healthused.fa.varimax$loadings[,2],
+     xlab = "Factor 3",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,3]-0.08,
+     us_healthused.fa.varimax$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,3],
+     us_healthused.fa.varimax$loadings[,4],
+     xlab = "Factor 3",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,3]-0.08,
+     us_healthused.fa.varimax$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor metode rotasi varimax, untuk faktor 3, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 3 dan variabel tersebut lemah. Sedangkan variabel "pneu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 3 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 3, di antaranya adalah variabel "pneu", "card", dan "pul".
+
+Dapat dikatakan, faktor 3 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat pneunomia, pulmonar, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 3 dapat diinterpretasikan sebagai "Besarnya kematian akibat pneunomia, pulmonar, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 4 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,3))
+plot(us_healthused.fa.varimax$loadings[,4],
+     us_healthused.fa.varimax$loadings[,1],
+     xlab = "Factor 4",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,4]-0.08,
+     us_healthused.fa.varimax$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,4],
+     us_healthused.fa.varimax$loadings[,2],
+     xlab = "Factor 4",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,4]-0.08,
+     us_healthused.fa.varimax$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax$loadings[,4],
+     us_healthused.fa.varimax$loadings[,3],
+     xlab = "Factor 4",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax$loadings[,4]-0.08,
+     us_healthused.fa.varimax$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor metode rotasi varimax, untuk faktor 4, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 4 dan variabel tersebut lemah. Sedangkan variabel "diab" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 4 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 4, di antaranya adalah variabel "liv", "doc", dan "popu". 
+
+Dapat dikatakan, faktor 4 menyatakan  banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat liver serta dengan kualitas maupun kuantitas tenaga kerja dokter dan jumlah populasi. Hal ini dapat diasumsikan bahwa mayoritas orang yang meninggal akibat liver, mungkin disebabkan karena kurangnya jumlah dokter dalam menangani penyakit liver. Jumlah dokter spesialis liver juga dipengaruhi karena populasi yang kurang. Oleh karena itu, faktor 4 dapat diinterpretasikan sebagai "Kurangnya populasi masyarakat mempengaruhi kuantitas dokter yang berdampak pada banyaknya orang yang meninggal akibat liver".
+
+## Perhitungan *loadings* dan *Uniquenesses* Dengan *factors* 5 dan Tidak Rotasi
+```{r}
+us_healthused.fa.none5<- factanal(us_healthused,factors = 5,
+                                 rotation = "none")
+us_healthused.fa.none5
+```
+<div align="justify">
+Berdasarkan deskripsi di atas, digunakan *factors* = 5 untuk mereduksi 10 variabel ke dalam 5 faktor dan tidak menggunakan rotasi faktor. Berdasarkan komponen *loadings* pada deskripsi di atas, variabel "doc" memiliki nilai *loadings* tertinggi untuk faktor 1, variabel "pneu" memiliki nilai *loadings* tertinggi untuk faktor 2, variabel "diab" memiliki nilai *loadings* tertinggi untuk faktor 3, variabel "liv" memiliki nilai *loadings* tertinggi untuk faktor 4, dan variabel "acc" memiliki nilai *loadings* tertinggi untuk faktor 5.
+
+Dilihat dari hasil perhitungan diperoleh **p-value** > 0.05, yang artinya hasil sample sudah cukup relevan dengan hipotesis awal benar, karena jumlah faktor yang sudah memadai sebagai representasi dari 10 variabel tersebut. Sehingga diperoleh model aproksimasi yang bersesuaian. 
+
+## Perhitungan *loadings* dan *Uniquenesses* Dengan *factors* 5 dan Rotasi Menggunakan Metode Varimax
+```{r}
+us_healthused.fa.varimax5<- factanal(us_healthused,factors = 5,
+                                    rotation = "varimax")
+us_healthused.fa.varimax5
+```
+<div align="justify">
+Berdasarkan deskripsi di atas, digunakan *factors* = 5 untuk mereduksi 10 variabel ke dalam 5 faktor dan menggunakan rotasi faktor dengan metode varimax. Metode varimax untuk rotasi faktor artinya menggunakan metode rotasi ortogonalisasi untuk meminimumkan variabel dengan nilai loadings tertinggi masing - masing faktor. Berdasarkan komponen loadings pada deskripsi di atas, variabel "hosp" memiliki nilai *loadings* tertinggi untuk faktor 1, variabel "canc" memiliki nilai *loadings* tertinggi untuk faktor 2, variabel "pneu" memiliki nilai *loadings* tertinggi untuk faktor 3, variabel "liv" memiliki nilai *loadings* tertinggi untuk faktor 4, dan variabel "pul" memiliki nilai *loadings* tertinggi untuk faktor 5.
+
+Dilihat dari hasil perhitungan diperoleh **p-value** > 0.05, yang artinya hasil sample sudah cukup relevan dengan hipotesis awal benar, karena jumlah faktor yang sudah memadai sebagai representasi dari 10 variabel tersebut. Sehingga diperoleh model aproksimasi yang bersesuaian. 
+
+## *Score Plot* dan Interpretasi Analisis Faktor Dengan 5 *factors* Antara Metode Tidak Rotasi dan Metode Varimax
+Akan dilihat perbandingan kelima faktor antara menggunakan metode tidak rotasi dan metode varimax.
+
++ *Score Plot* Faktor 1 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.none5$loadings[,1],
+     us_healthused.fa.none5$loadings[,2],
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,1]-0.08,
+     us_healthused.fa.none5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,1],
+     us_healthused.fa.none5$loadings[,3],
+     xlab = "Factor 1",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,1]-0.08,
+     us_healthused.fa.none5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,1],
+     us_healthused.fa.none5$loadings[,4],
+     xlab = "Factor 1",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,1]-0.08,
+     us_healthused.fa.none5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,1],
+     us_healthused.fa.none5$loadings[,5],
+     xlab = "Factor 1",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (1,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,1]-0.08,
+     us_healthused.fa.none5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 1, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 1 dan variabel tersebut lemah. Sedangkan variabel "popu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 1 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 1, di antaranya adalah variabel "popu", "doc", dan "hosp". 
+
+Berdasarkan *Score Plot* di atas, dapat dikatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah populasi, dokter, maupun rumah sakit. Faktor 1 sendiri menggambarkan banyaknya fasilitas rumah sakit dan tenaga kerja dokter mempengaruhi tingkat kesehatan populasi masyarakan. Oleh karena itu, faktor 1 dapat diinterpretasikan sebagai "Banyaknya jumlah rumah sakit dan tenaga kerja dokter mempengaruhi tingkat kesehatan populasi masyarakat di Amerika Serikat".
+
++ *Score Plot* Faktor 2 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.none5$loadings[,2],
+     us_healthused.fa.none5$loadings[,1],
+     xlab = "Factor 2",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (2,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,2]-0.08,
+     us_healthused.fa.none5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,2],
+     us_healthused.fa.none5$loadings[,3],
+     xlab = "Factor 2",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (2,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,2]-0.08,
+     us_healthused.fa.none5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,2],
+     us_healthused.fa.none5$loadings[,4],
+     xlab = "Factor 2",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (2,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,2]-0.08,
+     us_healthused.fa.none5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,2],
+     us_healthused.fa.none5$loadings[,5],
+     xlab = "Factor 2",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (2,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,2]-0.08,
+     us_healthused.fa.none5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 2, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 2 dan variabel tersebut lemah. Sedangkan variabel "pneu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 2 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 2, di antaranya adalah variabel "pneu", "card", dan "canc".
+
+Dapat dikatakan, faktor 2 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 2 dapat diinterpretasikan sebagai "Besarnya kematian akibat pneunomia, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 3 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.none5$loadings[,3],
+     us_healthused.fa.none5$loadings[,1],
+     xlab = "Factor 3",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (3,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,3]-0.08,
+     us_healthused.fa.none5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,3],
+     us_healthused.fa.none5$loadings[,2],
+     xlab = "Factor 3",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (3,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,3]-0.08,
+     us_healthused.fa.none5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,3],
+     us_healthused.fa.none5$loadings[,4],
+     xlab = "Factor 3",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (3,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,3]-0.08,
+     us_healthused.fa.none5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,3],
+     us_healthused.fa.none5$loadings[,5],
+     xlab = "Factor 3",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (3,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,3]-0.08,
+     us_healthused.fa.none5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 3, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 3 dan variabel tersebut lemah. Sedangkan variabel "canc" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 3 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 3, di antaranya adalah variabel "diab", "card", dan "canc". 
+
+Dapat dikatakan, faktor 3 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 3 dapat diinterpretasikan sebagai "Besarnya kematian akibat diabetes, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 4 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.none5$loadings[,4],
+     us_healthused.fa.none5$loadings[,1],
+     xlab = "Factor 4",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (4,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,4]-0.08,
+     us_healthused.fa.none5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,4],
+     us_healthused.fa.none5$loadings[,2],
+     xlab = "Factor 4",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (4,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,4]-0.08,
+     us_healthused.fa.none5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,4],
+     us_healthused.fa.none5$loadings[,3],
+     xlab = "Factor 4",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (4,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,4]-0.08,
+     us_healthused.fa.none5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,4],
+     us_healthused.fa.none5$loadings[,5],
+     xlab = "Factor 4",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (4,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,4]-0.08,
+     us_healthused.fa.none5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 4, variabel "hosp" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 4 dan variabel tersebut lemah. Sedangkan variabel "liv" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 4 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 4, di antaranya adalah variabel "liv", "pul", dan "canc".
+
+Dapat dikatakan, faktor 4 menyatakan  banyaknya rumah sakit dan tenaga kerja di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat liver, pulmonar,dan kanker. Hal ini dapat diasumsikan bahwa mayoritas orang yang meninggal akibat liver, pulmonar, dan kanker mungkin disebabkan karena orang - orang tersebut merupakan penderita diabetes ataupun kardiovaskular. Oleh karena itu, faktor 4 dapat diinterpretasikan sebagai "Penderita diabetes ataupun kardiovaskular menyebabkan banyaknya orang yang meninggal akibat liver, pulmonar, dan kanker".
+
++ *Score Plot* Faktor 5 Metode Tidak Rotasi
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.none5$loadings[,5],
+     us_healthused.fa.none5$loadings[,1],
+     xlab = "Factor 5",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (5,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,5]-0.08,
+     us_healthused.fa.none5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,5],
+     us_healthused.fa.none5$loadings[,2],
+     xlab = "Factor 5",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (5,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,5]-0.08,
+     us_healthused.fa.none5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,5],
+     us_healthused.fa.none5$loadings[,3],
+     xlab = "Factor 5",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (5,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,5]-0.08,
+     us_healthused.fa.none5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.none5$loadings[,5],
+     us_healthused.fa.none5$loadings[,4],
+     xlab = "Factor 5",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "no rotation (5,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.none5$loadings[,5]-0.08,
+     us_healthused.fa.none5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="red")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor *no rotation*, untuk faktor 5, variabel "diab" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 5 dan variabel tersebut lemah. Sedangkan variabel "acc" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 5 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 5, di antaranya adalah variabel "acc", "pul", dan "hosp".
+
+Dapat dikatakan, faktor 5 menyatakan banyaknya orang yang meninggal akibat kecelakaan dan pulmonar berkaitan dengan jumlah rumah sakit di Amerika Serikat. Hal ini dapat diasumsikan bahwa kurangnya kualitas ataupun kuantitas rumah sakit berpengaruh terhadap banyaknya orang yang meninggal akibat kecelakaan dan pulmonar. Oleh karena itu, faktor 5 dapat diinterpretasikan sebagai "Banyaknya orang yang meninggal akibat kecelakaan dan pulmonar dipicu kurangnya jumlah rumah sakit di Amerika Serikat".
+
++ *Score Plot* Faktor 1 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.varimax5$loadings[,1],
+     us_healthused.fa.varimax5$loadings[,2],
+     xlab = "Factor 1",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,1]-0.08,
+     us_healthused.fa.varimax5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,1],
+     us_healthused.fa.varimax5$loadings[,3],
+     xlab = "Factor 1",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,1]-0.08,
+     us_healthused.fa.varimax5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,1],
+     us_healthused.fa.varimax5$loadings[,4],
+     xlab = "Factor 1",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,1]-0.08,
+     us_healthused.fa.varimax5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,1],
+     us_healthused.fa.varimax5$loadings[,5],
+     xlab = "Factor 1",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(1,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,1]-0.08,
+     us_healthused.fa.varimax5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor dengan metode rotasi varimax, untuk faktor 1, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 1 dan variabel tersebut lemah. Sedangkan variabel "hosp" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 1 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 1, di antaranya adalah variabel "hosp", "popu", dan "doc". 
+
+Dapat dikatakan, faktor 1 menyatakan banyaknya fasilitas rumah sakit yang tersedia mempengaruhi kualitas kinerja dokter dan tingkat kesehatan populasi di Amerika Serikat. Dapat diasumsikan juga bahwa orang yang meninggal akibat kecelakaan tidak berkaitan dengan kualitas dokter maupun rumah sakit yang ada, melainkan mungkin karena kecelakaan yang terjadi di tempat kejadian menyebabkan kematian secara langsung. Oleh karena itu, faktor 1 dapat diinterpretasikan sebagai "Besarnya jumlah rumah sakit di Amerika Serikat mempengaruhi kesehatan dokter dan populasi masyarakat".
+
++ *Score Plot* Faktor 2 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.varimax5$loadings[,2],
+     us_healthused.fa.varimax5$loadings[,1],
+     xlab = "Factor 2",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,2]-0.08,
+     us_healthused.fa.varimax5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,2],
+     us_healthused.fa.varimax5$loadings[,3],
+     xlab = "Factor 2",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,2]-0.08,
+     us_healthused.fa.varimax5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,2],
+     us_healthused.fa.varimax5$loadings[,4],
+     xlab = "Factor 2",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,2]-0.08,
+     us_healthused.fa.varimax5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,2],
+     us_healthused.fa.varimax5$loadings[,5],
+     xlab = "Factor 2",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(2,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,2]-0.08,
+     us_healthused.fa.varimax5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis metode rotasi varimax, untuk faktor 2, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 2 dan variabel tersebut lemah. Sedangkan variabel "canc" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 2 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 2, di antaranya adalah variabel "canc", "card", dan "diab". 
+
+Dapat dikatakan, faktor 2 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat pneunomia, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 2 dapat diinterpretasikan sebagai "Besarnya kematian akibat diabetes, kanker, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 3 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.varimax5$loadings[,3],
+     us_healthused.fa.varimax5$loadings[,1],
+     xlab = "Factor 3",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,3]-0.08,
+     us_healthused.fa.varimax5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,3],
+     us_healthused.fa.varimax5$loadings[,2],
+     xlab = "Factor 3",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,3]-0.08,
+     us_healthused.fa.varimax5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,3],
+     us_healthused.fa.varimax5$loadings[,4],
+     xlab = "Factor 3",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,3]-0.08,
+     us_healthused.fa.varimax5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,3],
+     us_healthused.fa.varimax5$loadings[,5],
+     xlab = "Factor 3",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(3,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,3]-0.08,
+     us_healthused.fa.varimax5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor metode rotasi varimax, untuk faktor 3, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 3 dan variabel tersebut lemah. Sedangkan variabel "pneu" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 3 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 3, di antaranya adalah variabel "pneu", "card", dan "pul". 
+
+Dapat dikatakan, faktor 3 menyatakan banyaknya kecelakaan yang terjadi di Amerika Serikat tidak berkaitan dengan jumlah orang yang meninggal akibat pneunomia, pulmonar, maupun kardiovaskular. Hal ini dapat diasumsikan bahwa orang yang meninggal akibat diabetes, kanker, maupun kardiovaskular terjadi mungkin karena kurangnya tenaga kerja dokter baik secara kualitas maupun kuantitas, ataupun karena kapasitas rumah sakit yang belum memadai. Oleh karena itu, faktor 3 dapat diinterpretasikan sebagai "Besarnya kematian akibat pneunomia, pulmonar, dan kardiovaskular karena pengaruh fasilitas kesehatan".
+
++ *Score Plot* Faktor 4 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.varimax5$loadings[,4],
+     us_healthused.fa.varimax5$loadings[,1],
+     xlab = "Factor 4",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,4]-0.08,
+     us_healthused.fa.varimax5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,4],
+     us_healthused.fa.varimax5$loadings[,2],
+     xlab = "Factor 4",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,4]-0.08,
+     us_healthused.fa.varimax5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,4],
+     us_healthused.fa.varimax5$loadings[,3],
+     xlab = "Factor 4",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,4]-0.08,
+     us_healthused.fa.varimax5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,4],
+     us_healthused.fa.varimax5$loadings[,5],
+     xlab = "Factor 4",
+     ylab = "Factor 5",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(4,5)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,4]-0.08,
+     us_healthused.fa.varimax5$loadings[,5]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor metode rotasi varimax, untuk faktor 4, variabel "acc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 4 dan variabel tersebut lemah. Sedangkan variabel "diab" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 4 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 4, di antaranya adalah variabel "liv", "doc", dan "pul". 
+
+Dapat dikatakan, faktor 4 menyatakan banyaknya jumlah orang yang meninggal akibat liver dan pulmonar di Amerika Serikat berkaitan dengan jumlah dokter yang tersedia baik spesialis maupun tidak. Hal ini dapat diasumsikan bahwa mayoritas orang yang meninggal akibat liver dan pulmonar, disebabkan karena kurangnya jumlah dokter dalam menangani penyakit liver dan pulmonar. Oleh karena itu, faktor 4 dapat diinterpretasikan sebagai "Kurangnya dokter spesialis liver dan pulmonar berdampak pada banyaknya orang yang meninggal akibat liver dan pulmonar".
+
++ *Score Plot* Faktor 5 Metode Rotasi Varimax
+```{r}
+par(mfrow = c(1,4))
+plot(us_healthused.fa.varimax5$loadings[,5],
+     us_healthused.fa.varimax5$loadings[,1],
+     xlab = "Factor 5",
+     ylab = "Factor 1",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(5,1)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,5]-0.08,
+     us_healthused.fa.varimax5$loadings[,1]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,5],
+     us_healthused.fa.varimax5$loadings[,2],
+     xlab = "Factor 5",
+     ylab = "Factor 2",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(5,2)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,5]-0.08,
+     us_healthused.fa.varimax5$loadings[,2]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,5],
+     us_healthused.fa.varimax5$loadings[,3],
+     xlab = "Factor 5",
+     ylab = "Factor 3",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(5,3)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,5]-0.08,
+     us_healthused.fa.varimax5$loadings[,3]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+
+plot(us_healthused.fa.varimax5$loadings[,5],
+     us_healthused.fa.varimax5$loadings[,4],
+     xlab = "Factor 5",
+     ylab = "Factor 4",
+     xlim = c(-1,1),
+     ylim = c(-1,1),
+     main = "Varimax rotation(5,4)")
+abline(h = 0, v = 0)
+
+text(us_healthused.fa.varimax5$loadings[,5]-0.08,
+     us_healthused.fa.varimax5$loadings[,4]+0.08,
+     colnames(us_healthused),
+     col="blue")
+abline(h = 0, v = 0)
+```
+<div align="justify">
+Berdasarkan *Score Plot* analisis faktor metode varimax, untuk faktor 5, variabel "doc" berada memiliki nilai yang paling negatif yang menunjukkan ikatan antara faktor 5 dan variabel tersebut lemah. Sedangkan variabel "pul" memiliki nilai yang paling positif, yang mengindikasikan ikatan antara faktor 5 dan variabel tersebut kuat. Diambil 3 variabel yang memiliki ikatan atau relasi paling kuat dengan faktor 5, di antaranya adalah variabel "pul", "acc", dan "card". 
+
+Dapat dikatakan, faktor 5 menyatakan banyaknya jumlah orang yang meninggal akibat kecelakaan di Amerika Serikat berkaitan dengan penderita pulmonar dan kardiovaskular yang meninggal juga. Hal ini dapat diasumsikan bahwa mayoritas orang yang meninggal akibat kecelakaan, kardiovaskular, dan pulmonar, tidak disebabkan karena kurangnya jumlah dokter dalam menangani hal tersebut. Melainkan karena kondisi kesehatan yang dialami oleh orang tersebut.  Oleh karena itu, faktor 5 dapat diinterpretasikan sebagai "Kurangnya dokter spesialis kardiovaskular dan pulmonar tidak berdampak pada banyaknya orang yang meninggal akibat kecelakaan, kardiovaskular, dan pulmonar".
+
+# Kesimpulan
+<div align="justify">
+Berdasarkan penelitian yang dilakukan, data kesehatan US Health yang terdiri dari 14 variabel yang kemudian hanya digunakan 10 variabel saja, lalu variabel - variabel tersebut direduksi ke dalam bentuk faktor *loadings* dengan *factors* = 4 dan *factors* = 5 menggunakan metode analisis faktor. Berdasarkan **p-value** yang ada, dinyatakan bahwa data US Health akan memiliki memiliki model yang relevan jika direduksi menjadi lebih dari 4 faktor *loadings*. Kemudian, data US Health yang direduksi menjadi 5 faktor memiliki representasi model yang baik karena nilai *Uniquenesses* yang lebih rendah daripada data US health yang direduksi menjadi 4 faktor saja.
